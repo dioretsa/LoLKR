@@ -64,7 +64,7 @@ http {
 
     # enable auto-update
     server {
-        listen      8020;
+        listen      $2;
         server_name localhost;
 
         rewrite      ^/releases/Maclive/(projects/league_client_ko_kr/.*)$      /KR_CBT/$1;
