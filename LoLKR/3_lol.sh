@@ -76,6 +76,9 @@ Region = KR" > "$BASE_DIR/system/system.cfg"
 if [ ! -d "$BASE_DIR/projects/lol_air_client_config_oc1/releases" ]; then
     echo "북미 서버를 먼저 선택하고 업데이트가 완료되어야 합니다."
     exit 3
+elif [ ! -d "$BASE_DIR/projects/league_client_en_us/releases" ]; then
+    echo "북미 서버를 먼저 선택하고 업데이트가 완료되어야 합니다."
+    exit 3
 fi
 
 if [ ! -d "$BASE_DIR/projects/lol_air_client_config_kr" ]; then
@@ -99,3 +102,70 @@ riotDataServiceDataSendProbability=1.0" > "$filename"; done
 
 echo "airConfigProject = lol_air_client_config_kr" > "$BASE_DIR/system/launcher.cfg"
 echo "locale = ko_KR" > "$BASE_DIR/system/locale.cfg"
+
+LATEST=`find projects/league_client/releases -depth 1 | sort -gr | head -n1`
+
+patch $LATEST/deploy/system.yaml << EOF
+--- system.yaml	2000-01-01 00:00:00.000000000 +0900
++++ system.yaml	2000-01-01 00:00:00.000000000 +0900
+@@ -84,7 +84,7 @@
+     - copy_to_solution: false
+       headers: []
+       history: keep
+-      hostname: l3cdn.riotgames.com
++      hostname: 127.0.0.1:$2
+       id: league_client_sln
+       locale: en_US
+       region: NA
+@@ -94,7 +94,7 @@
+     - copy_to_solution: true
+       headers: []
+       history: none
+-      hostname: l3cdn.riotgames.com
++      hostname: 127.0.0.1:$2
+       id: lol_game_client_sln
+       locale: en_US
+       region: NA
+@@ -476,6 +477,39 @@
+       store:
+         store_url: https://store.tr.lol.riotgames.com
+     web_region: tr
++  KR:
++    available_locales:
++    - ko_KR
++    default_locale: ko_KR
++    rso_platform_id: KR
++    servers:
++      chat:
++        allow_self_signed_cert: false
++        chat_host: chat.kr.lol.riotgames.com
++        chat_port: 5223
++      entitlements:
++        entitlements_url: https://entitlements.auth.riotgames.com/api/token/v1
++      lcds:
++        lcds_host: prod.kr.lol.riotgames.com
++        lcds_port: 2099
++        login_queue_url: https://lq.kr.lol.riotgames.com/login-queue/rest/queues/lol
++        use_tls: true
++      license_agreement_urls:
++        eula: http://www.leagueoflegends.co.kr/?m=rules&cid=3
++        terms_of_use: http://www.leagueoflegends.co.kr/?m=rules&cid=1
++      payments:
++        payments_host: https://plstore.kr.lol.riotgames.com
++      prelogin_config:
++        prelogin_config_url: https://prod.config.patcher.riotgames.com
++      rms:
++        rms_heartbeat_interval_seconds: 60
++        rms_url: wss://riot.edge.rms.si.riotgames.com:443
++      service_status:
++        api_url: https://status.leagueoflegends.com/shards/kr/synopsis
++        human_readable_status_url: https://status.leagueoflegends.com/#kr
++      store:
++        store_url: https://store.kr.lol.riotgames.com
++    web_region: kr
+ rso:
+   kount:
+     collector: prod02.kaxsdc.com
+EOF
+
+echo "지역을 KR로 변경해주세요."

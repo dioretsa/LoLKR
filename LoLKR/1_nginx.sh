@@ -16,7 +16,7 @@ fi
 
 # install
 if type /usr/local/bin/brew 2>/dev/null; then
-    /usr/local/bin/brew update && /usr/local/bin/brew install nginx
+    /usr/local/bin/brew update && /usr/local/bin/brew install nginx-full --with-sub
 else
     echo "터미널에 다음 커맨드를 복사해서 brew를 먼저 설치해주세요. ruby -e \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\""
     exit 1
@@ -64,15 +64,29 @@ http {
 
     # enable auto-update
     server {
-        listen      $2;
+        listen      8020;
         server_name localhost;
 
-        rewrite      ^(.*)_KR\$                                             \$1_OC1;
-        rewrite      ^(.*)_ko_kr/(((?!files|releasemanifest).)*)\$          \$1_en_au/\$2;
-        rewrite      ^(.*)_kr/(((?!files|releasemanifest).)*)\$             \$1_oc1/\$2;
+        rewrite      ^/releases/Maclive/(projects/league_client_ko_kr/.*)$      /KR_CBT/$1;
+        rewrite      ^(/releases/.*)_KR$                                        $1_OC1;
+        rewrite      ^(/releases/.*)_ko_kr/(.*)$                                $1_en_au/$2;
+        rewrite      ^(/releases/.*)_kr/(.*)$                                   $1_oc1/$2;
 
         location / {
             proxy_pass  http://l3cdn.riotgames.com;
+            proxy_connect_timeout 60s;
+            proxy_read_timeout 60s;
+        }
+        location ~ solutionmanifest$ {
+            proxy_pass  http://l3cdn.riotgames.com;
+            proxy_connect_timeout 60s;
+            proxy_read_timeout 60s;
+            sub_filter_types *;
+            sub_filter en_au ko_kr;
+            sub_filter_once off;
+        }
+        location /KR_CBT {
+            proxy_pass  http://kr.patchdata.lolstatic.com;
             proxy_connect_timeout 60s;
             proxy_read_timeout 60s;
         }

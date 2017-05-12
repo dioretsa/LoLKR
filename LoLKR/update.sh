@@ -26,12 +26,15 @@ if [ ! -d "$4" ]; then
     exit 1
 fi
 
+LATEST=`find "$4/Contents/LoL/RADS/projects/league_client/releases" -depth 1 | sort -gr | head -n1`
+
 #
 if [ "$1" = "on" ]; then
     sh "$5"
     echo "DownloadPath = /releases/Maclive
     DownloadURL = 127.0.0.1:$3
     Region = KR" > "$4/Contents/LoL/RADS/system/system.cfg"
+    sed -i '' "s/hostname:.*$/hostname: 127.0.0.1:$3/" "$LATEST/deploy/system.yaml"
     echo "업데이트를 허용 하였습니다. 롤을 다시 시작해서 업데이트를 진행하세요. 업데이트가 끝나면 다시 업데이트 방지로 변경해주세요."
 fi
 
@@ -39,5 +42,6 @@ if [ "$1" = "off" ]; then
     echo "DownloadPath = /releases/Maclive
     DownloadURL = 127.0.0.1:$2
     Region = KR" > "$4/Contents/LoL/RADS/system/system.cfg"
+    sed -i '' "s/hostname:.*$/hostname: 127.0.0.1:$2/" "$LATEST/deploy/system.yaml"
     echo "자동 업데이트가 정상적으로 차단되었습니다. 한국 서버가 업데이트가 될때까지 이 상태로 두시면 됩니다."
 fi
