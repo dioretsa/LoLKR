@@ -103,9 +103,73 @@ riotDataServiceDataSendProbability=1.0" > "$filename"; done
 echo "airConfigProject = lol_air_client_config_kr" > "$BASE_DIR/system/launcher.cfg"
 echo "locale = ko_KR" > "$BASE_DIR/system/locale.cfg"
 
-LATEST=`find projects/league_client/releases -depth 1 | sort -gr | head -n1`
+echo "
+worker_processes    1;
 
-patch $LATEST/deploy/system.yaml << EOF
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       mime.types;
+    default_type  text/plain;
+
+    # disable auto-update
+    server {
+        listen       8010;
+        server_name  localhost;
+
+        location / {
+            root        html;
+            try_files   $uri $uri/ @cdn;
+        }
+
+        location @cdn {
+            proxy_pass  http://l3cdn.riotgames.com;
+            proxy_connect_timeout 60s;
+            proxy_read_timeout 60s;
+        }
+    }
+
+    # enable auto-update
+    server {
+        listen      8020;
+        server_name localhost;
+
+        rewrite      ^/releases/Maclive/(projects/league_client_ko_kr/.*)$      /KR_CBT/$1     last;
+        rewrite      ^(/releases/Maclive/projects/lol_game_client_ko_kr/.*)$    $1             last;
+	rewrite      ^(/releases/.*)_KR$                                        $1_OC1;
+	rewrite      ^(/releases/.*)_KR_(.*)$                                   $1_OC1_$2;
+	rewrite      ^(/releases/.*)_ko_kr/(.*)$                                $1_en_au/$2;
+	rewrite      ^(/releases/.*)_kr/(.*)$                                   $1_oc1/$2;
+
+        location /KR_CBT {
+            proxy_pass  http://kr.patchdata.lolstatic.com;
+            proxy_connect_timeout 60s;
+            proxy_read_timeout 60s;
+        }
+        location / {
+            proxy_pass  http://l3cdn.riotgames.com;
+            proxy_connect_timeout 60s;
+            proxy_read_timeout 60s;
+        }
+        location ~ /releases/Maclive/solutions/league_client_sln/.*/solutionmanifest$ {
+            proxy_pass  http://l3cdn.riotgames.com;
+            proxy_connect_timeout 60s;
+            proxy_read_timeout 60s;
+            sub_filter_types *;
+            sub_filter en_au ko_kr;
+            sub_filter_once off;
+        }
+    }
+}
+" > /usr/local/etc/nginx/nginx.conf
+/usr/local/bin/nginx -s reload
+
+LATEST=`find "$BASE_DIR/projects/league_client/releases" -depth 1 | sort -gr | head -n1`
+echo $LATEST
+
+patch "$LATEST/deploy/system.yaml" << EOF
 --- system.yaml	2000-01-01 00:00:00.000000000 +0900
 +++ system.yaml	2000-01-01 00:00:00.000000000 +0900
 @@ -84,7 +84,7 @@
@@ -113,7 +177,7 @@ patch $LATEST/deploy/system.yaml << EOF
        headers: []
        history: keep
 -      hostname: l3cdn.riotgames.com
-+      hostname: 127.0.0.1:$2
++      hostname: 127.0.0.1:8020
        id: league_client_sln
        locale: en_US
        region: NA
@@ -122,7 +186,7 @@ patch $LATEST/deploy/system.yaml << EOF
        headers: []
        history: none
 -      hostname: l3cdn.riotgames.com
-+      hostname: 127.0.0.1:$2
++      hostname: 127.0.0.1:8020
        id: lol_game_client_sln
        locale: en_US
        region: NA
